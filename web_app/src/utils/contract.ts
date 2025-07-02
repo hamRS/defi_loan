@@ -1,812 +1,372 @@
 import { ethers } from 'ethers';
 
-// Contract ABI - using the full ABI from the compiled contract
-const contractABI = [
-    {
-        "inputs": [],
-        "stateMutability": "nonpayable",
-        "type": "constructor"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "address",
-                "name": "sender",
-                "type": "address"
-            },
-            {
-                "internalType": "uint256",
-                "name": "tokenId",
-                "type": "uint256"
-            },
-            {
-                "internalType": "address",
-                "name": "owner",
-                "type": "address"
-            }
-        ],
-        "name": "ERC721IncorrectOwner",
-        "type": "error"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "address",
-                "name": "operator",
-                "type": "address"
-            },
-            {
-                "internalType": "uint256",
-                "name": "tokenId",
-                "type": "uint256"
-            }
-        ],
-        "name": "ERC721InsufficientApproval",
-        "type": "error"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "address",
-                "name": "approver",
-                "type": "address"
-            }
-        ],
-        "name": "ERC721InvalidApprover",
-        "type": "error"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "address",
-                "name": "operator",
-                "type": "address"
-            }
-        ],
-        "name": "ERC721InvalidOperator",
-        "type": "error"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "address",
-                "name": "owner",
-                "type": "address"
-            }
-        ],
-        "name": "ERC721InvalidOwner",
-        "type": "error"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "address",
-                "name": "receiver",
-                "type": "address"
-            }
-        ],
-        "name": "ERC721InvalidReceiver",
-        "type": "error"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "address",
-                "name": "sender",
-                "type": "address"
-            }
-        ],
-        "name": "ERC721InvalidSender",
-        "type": "error"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "uint256",
-                "name": "tokenId",
-                "type": "uint256"
-            }
-        ],
-        "name": "ERC721NonexistentToken",
-        "type": "error"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "address",
-                "name": "owner",
-                "type": "address"
-            }
-        ],
-        "name": "OwnableInvalidOwner",
-        "type": "error"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "address",
-                "name": "account",
-                "type": "address"
-            }
-        ],
-        "name": "OwnableUnauthorizedAccount",
-        "type": "error"
-    },
-    {
-        "anonymous": false,
-        "inputs": [
-            {
-                "indexed": true,
-                "internalType": "address",
-                "name": "owner",
-                "type": "address"
-            },
-            {
-                "indexed": true,
-                "internalType": "address",
-                "name": "approved",
-                "type": "address"
-            },
-            {
-                "indexed": true,
-                "internalType": "uint256",
-                "name": "tokenId",
-                "type": "uint256"
-            }
-        ],
-        "name": "Approval",
-        "type": "event"
-    },
-    {
-        "anonymous": false,
-        "inputs": [
-            {
-                "indexed": true,
-                "internalType": "address",
-                "name": "owner",
-                "type": "address"
-            },
-            {
-                "indexed": true,
-                "internalType": "address",
-                "name": "operator",
-                "type": "address"
-            },
-            {
-                "indexed": false,
-                "internalType": "bool",
-                "name": "approved",
-                "type": "bool"
-            }
-        ],
-        "name": "ApprovalForAll",
-        "type": "event"
-    },
-    {
-        "anonymous": false,
-        "inputs": [
-            {
-                "indexed": true,
-                "internalType": "uint256",
-                "name": "tokenId",
-                "type": "uint256"
-            },
-            {
-                "indexed": false,
-                "internalType": "address",
-                "name": "owner",
-                "type": "address"
-            },
-            {
-                "indexed": false,
-                "internalType": "uint96",
-                "name": "price",
-                "type": "uint96"
-            }
-        ],
-        "name": "ItemListed",
-        "type": "event"
-    },
-    {
-        "anonymous": false,
-        "inputs": [
-            {
-                "indexed": true,
-                "internalType": "uint256",
-                "name": "tokenId",
-                "type": "uint256"
-            },
-            {
-                "indexed": false,
-                "internalType": "address",
-                "name": "buyer",
-                "type": "address"
-            }
-        ],
-        "name": "ItemSold",
-        "type": "event"
-    },
-    {
-        "anonymous": false,
-        "inputs": [
-            {
-                "indexed": true,
-                "internalType": "address",
-                "name": "previousOwner",
-                "type": "address"
-            },
-            {
-                "indexed": true,
-                "internalType": "address",
-                "name": "newOwner",
-                "type": "address"
-            }
-        ],
-        "name": "OwnershipTransferred",
-        "type": "event"
-    },
-    {
-        "anonymous": false,
-        "inputs": [
-            {
-                "indexed": true,
-                "internalType": "address",
-                "name": "from",
-                "type": "address"
-            },
-            {
-                "indexed": true,
-                "internalType": "address",
-                "name": "to",
-                "type": "address"
-            },
-            {
-                "indexed": true,
-                "internalType": "uint256",
-                "name": "tokenId",
-                "type": "uint256"
-            }
-        ],
-        "name": "Transfer",
-        "type": "event"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "address",
-                "name": "to",
-                "type": "address"
-            },
-            {
-                "internalType": "uint256",
-                "name": "tokenId",
-                "type": "uint256"
-            }
-        ],
-        "name": "approve",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "address",
-                "name": "owner",
-                "type": "address"
-            }
-        ],
-        "name": "balanceOf",
-        "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "uint256",
-                "name": "tokenId",
-                "type": "uint256"
-            }
-        ],
-        "name": "buy",
-        "outputs": [],
-        "stateMutability": "payable",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "getAllListings",
-        "outputs": [
-            {
-                "components": [
-                    {
-                        "internalType": "address",
-                        "name": "owner",
-                        "type": "address"
-                    },
-                    {
-                        "internalType": "uint96",
-                        "name": "price",
-                        "type": "uint96"
-                    },
-                    {
-                        "internalType": "bool",
-                        "name": "isSold",
-                        "type": "bool"
-                    },
-                    {
-                        "internalType": "string",
-                        "name": "uri",
-                        "type": "string"
-                    }
-                ],
-                "internalType": "struct TokenTreasure2025.Listing[]",
-                "name": "",
-                "type": "tuple[]"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "uint256",
-                "name": "tokenId",
-                "type": "uint256"
-            }
-        ],
-        "name": "getApproved",
-        "outputs": [
-            {
-                "internalType": "address",
-                "name": "",
-                "type": "address"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "uint256",
-                "name": "tokenId",
-                "type": "uint256"
-            }
-        ],
-        "name": "getListing",
-        "outputs": [
-            {
-                "internalType": "address",
-                "name": "",
-                "type": "address"
-            },
-            {
-                "internalType": "uint96",
-                "name": "",
-                "type": "uint96"
-            },
-            {
-                "internalType": "bool",
-                "name": "",
-                "type": "bool"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "address",
-                "name": "owner",
-                "type": "address"
-            },
-            {
-                "internalType": "address",
-                "name": "operator",
-                "type": "address"
-            }
-        ],
-        "name": "isApprovedForAll",
-        "outputs": [
-            {
-                "internalType": "bool",
-                "name": "",
-                "type": "bool"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
-            }
-        ],
-        "name": "listings",
-        "outputs": [
-            {
-                "internalType": "address",
-                "name": "owner",
-                "type": "address"
-            },
-            {
-                "internalType": "uint96",
-                "name": "price",
-                "type": "uint96"
-            },
-            {
-                "internalType": "bool",
-                "name": "isSold",
-                "type": "bool"
-            },
-            {
-                "internalType": "string",
-                "name": "uri",
-                "type": "string"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "string",
-                "name": "_uri",
-                "type": "string"
-            },
-            {
-                "internalType": "uint96",
-                "name": "_price",
-                "type": "uint96"
-            }
-        ],
-        "name": "mintAndList",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "mintInitialBatch",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "name",
-        "outputs": [
-            {
-                "internalType": "string",
-                "name": "",
-                "type": "string"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "nextTokenId",
-        "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "owner",
-        "outputs": [
-            {
-                "internalType": "address",
-                "name": "",
-                "type": "address"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "uint256",
-                "name": "tokenId",
-                "type": "uint256"
-            }
-        ],
-        "name": "ownerOf",
-        "outputs": [
-            {
-                "internalType": "address",
-                "name": "",
-                "type": "address"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "renounceOwnership",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "address",
-                "name": "from",
-                "type": "address"
-            },
-            {
-                "internalType": "address",
-                "name": "to",
-                "type": "address"
-            },
-            {
-                "internalType": "uint256",
-                "name": "tokenId",
-                "type": "uint256"
-            }
-        ],
-        "name": "safeTransferFrom",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "address",
-                "name": "from",
-                "type": "address"
-            },
-            {
-                "internalType": "address",
-                "name": "to",
-                "type": "address"
-            },
-            {
-                "internalType": "uint256",
-                "name": "tokenId",
-                "type": "uint256"
-            },
-            {
-                "internalType": "bytes",
-                "name": "data",
-                "type": "bytes"
-            }
-        ],
-        "name": "safeTransferFrom",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "address",
-                "name": "operator",
-                "type": "address"
-            },
-            {
-                "internalType": "bool",
-                "name": "approved",
-                "type": "bool"
-            }
-        ],
-        "name": "setApprovalForAll",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "bytes4",
-                "name": "interfaceId",
-                "type": "bytes4"
-            }
-        ],
-        "name": "supportsInterface",
-        "outputs": [
-            {
-                "internalType": "bool",
-                "name": "",
-                "type": "bool"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "symbol",
-        "outputs": [
-            {
-                "internalType": "string",
-                "name": "",
-                "type": "string"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "uint256",
-                "name": "tokenId",
-                "type": "uint256"
-            }
-        ],
-        "name": "tokenURI",
-        "outputs": [
-            {
-                "internalType": "string",
-                "name": "",
-                "type": "string"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "address",
-                "name": "from",
-                "type": "address"
-            },
-            {
-                "internalType": "address",
-                "name": "to",
-                "type": "address"
-            },
-            {
-                "internalType": "uint256",
-                "name": "tokenId",
-                "type": "uint256"
-            }
-        ],
-        "name": "transferFrom",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [
-            {
-                "internalType": "address",
-                "name": "newOwner",
-                "type": "address"
-            }
-        ],
-        "name": "transferOwnership",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "withdraw",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    }
+// Contract ABIs
+const COLLATERAL_TOKEN_ABI = [
+    "function name() view returns (string)",
+    "function symbol() view returns (string)",
+    "function decimals() view returns (uint8)",
+    "function totalSupply() view returns (uint256)",
+    "function balanceOf(address) view returns (uint256)",
+    "function transfer(address to, uint256 amount) returns (bool)",
+    "function approve(address spender, uint256 amount) returns (bool)",
+    "function allowance(address owner, address spender) view returns (uint256)",
+    "function transferFrom(address from, address to, uint256 amount) returns (bool)",
+    "event Transfer(address indexed from, address indexed to, uint256 value)",
+    "event Approval(address indexed owner, address indexed spender, uint256 value)"
 ];
 
-// Get contract instance
-export const getContract = async () => {
+const LOAN_TOKEN_ABI = [
+    "function name() view returns (string)",
+    "function symbol() view returns (string)",
+    "function decimals() view returns (uint8)",
+    "function totalSupply() view returns (uint256)",
+    "function balanceOf(address) view returns (uint256)",
+    "function transfer(address to, uint256 amount) returns (bool)",
+    "function approve(address spender, uint256 amount) returns (bool)",
+    "function allowance(address owner, address spender) view returns (uint256)",
+    "function transferFrom(address from, address to, uint256 amount) returns (bool)",
+    "event Transfer(address indexed from, address indexed to, uint256 value)",
+    "event Approval(address indexed owner, address indexed spender, uint256 value)"
+];
+
+const LENDING_PROTOCOL_ABI = [
+    "function collateralToken() view returns (address)",
+    "function loanToken() view returns (address)",
+    "function INTEREST_RATE() view returns (uint256)",
+    "function COLLATERAL_RATIO() view returns (uint256)",
+    "function positions(address) view returns (uint256 collateral, uint256 debt, uint256 lastUpdated)",
+    "function depositCollateral(uint256 amount)",
+    "function borrow(uint256 amount)",
+    "function repay()",
+    "function withdrawCollateral()",
+    "function getUserPosition(address user) view returns (uint256 collateral, uint256 debt, uint256 interest)",
+    "event Deposited(address indexed user, uint256 amount)",
+    "event Borrowed(address indexed user, uint256 amount)",
+    "event Repaid(address indexed user, uint256 amount)",
+    "event Withdrawn(address indexed user, uint256 amount)"
+];
+
+// Contract addresses from environment variables
+const CONTRACT_ADDRESSES = {
+    COLLATERAL_TOKEN: import.meta.env.VITE_COLLATERAL_CONTRACT || "",
+    LOAN_TOKEN: import.meta.env.VITE_LOAN_TOKEN_CONTRACT || "",
+    LENDING_PROTOCOL: import.meta.env.VITE_LENDING_PROTOCOL_CONTRACT || ""
+};
+
+// Validate that all required environment variables are set
+const validateEnvironment = () => {
+    const requiredVars = [
+        'VITE_COLLATERAL_CONTRACT',
+        'VITE_LOAN_TOKEN_CONTRACT',
+        'VITE_LENDING_PROTOCOL_CONTRACT'
+    ];
+
+    const missingVars = requiredVars.filter(varName => !import.meta.env[varName]);
+
+    if (missingVars.length > 0) {
+        console.warn('Missing environment variables:', missingVars);
+        console.warn('Please set up your .env file with the required contract addresses.');
+    }
+};
+
+// Call validation on module load
+validateEnvironment();
+
+// Export current contract addresses for debugging
+export const getContractAddresses = () => {
+    return {
+        ...CONTRACT_ADDRESSES,
+        networkName: import.meta.env.VITE_NETWORK_NAME || 'unknown',
+        chainId: import.meta.env.VITE_CHAIN_ID || 'unknown'
+    };
+};
+
+// Check if contracts are properly configured
+export const areContractsConfigured = () => {
+    return CONTRACT_ADDRESSES.COLLATERAL_TOKEN &&
+        CONTRACT_ADDRESSES.LOAN_TOKEN &&
+        CONTRACT_ADDRESSES.LENDING_PROTOCOL;
+};
+
+// Types
+export interface UserPosition {
+    collateral: string;
+    debt: string;
+    interest: string;
+}
+
+export interface TokenInfo {
+    name: string;
+    symbol: string;
+    decimals: number;
+    totalSupply: string;
+    balance: string;
+}
+
+export interface ProtocolInfo {
+    collateralTokenAddress: string;
+    loanTokenAddress: string;
+    interestRate: number;
+    collateralRatio: number;
+    protocolLiquidity: string;
+}
+
+// Contract instances
+let collateralTokenContract: ethers.Contract | null = null;
+let loanTokenContract: ethers.Contract | null = null;
+let lendingProtocolContract: ethers.Contract | null = null;
+let provider: ethers.BrowserProvider | null = null;
+let signer: ethers.JsonRpcSigner | null = null;
+
+// Initialize contracts
+export const initializeContracts = async () => {
     if (typeof window.ethereum === 'undefined') {
-        throw new Error('Please install MetaMask');
+        throw new Error('MetaMask is not installed');
     }
 
-    const provider = new ethers.BrowserProvider(window.ethereum);
-    const signer = await provider.getSigner();
-    const contractAddress = import.meta.env.VITE_CONTRACT_ADDRESS;
+    provider = new ethers.BrowserProvider(window.ethereum);
+    signer = await provider.getSigner();
 
-    return new ethers.Contract(contractAddress, contractABI, signer);
+    collateralTokenContract = new ethers.Contract(
+        CONTRACT_ADDRESSES.COLLATERAL_TOKEN,
+        COLLATERAL_TOKEN_ABI,
+        signer
+    );
+
+    loanTokenContract = new ethers.Contract(
+        CONTRACT_ADDRESSES.LOAN_TOKEN,
+        LOAN_TOKEN_ABI,
+        signer
+    );
+
+    lendingProtocolContract = new ethers.Contract(
+        CONTRACT_ADDRESSES.LENDING_PROTOCOL,
+        LENDING_PROTOCOL_ABI,
+        signer
+    );
+
+    return {
+        collateralTokenContract,
+        loanTokenContract,
+        lendingProtocolContract,
+        provider,
+        signer
+    };
+};
+
+// Get contract instances
+export const getContracts = () => {
+    if (!collateralTokenContract || !loanTokenContract || !lendingProtocolContract) {
+        throw new Error('Contracts not initialized. Call initializeContracts() first.');
+    }
+    return {
+        collateralTokenContract,
+        loanTokenContract,
+        lendingProtocolContract,
+        provider,
+        signer
+    };
+};
+
+// Token functions
+export const getTokenInfo = async (tokenType: 'collateral' | 'loan'): Promise<TokenInfo> => {
+    const { signer } = getContracts();
+    if (!signer) throw new Error('Signer not available');
+    const contract = tokenType === 'collateral' ? collateralTokenContract! : loanTokenContract!;
+    const address = await signer.getAddress();
+
+    const [name, symbol, decimals, totalSupply, balance] = await Promise.all([
+        contract.name(),
+        contract.symbol(),
+        contract.decimals(),
+        contract.totalSupply(),
+        contract.balanceOf(address)
+    ]);
+
+    return {
+        name,
+        symbol,
+        decimals: Number(decimals),
+        totalSupply: ethers.formatEther(totalSupply),
+        balance: ethers.formatEther(balance)
+    };
+};
+
+export const approveToken = async (tokenType: 'collateral' | 'loan', amount: string) => {
+    const contract = tokenType === 'collateral' ? collateralTokenContract! : loanTokenContract!;
+    const amountWei = ethers.parseEther(amount);
+
+    const tx = await contract.approve(CONTRACT_ADDRESSES.LENDING_PROTOCOL, amountWei);
+    await tx.wait();
+    return tx;
+};
+
+export const getTokenAllowance = async (tokenType: 'collateral' | 'loan'): Promise<string> => {
+    const { signer } = getContracts();
+    if (!signer) throw new Error('Signer not available');
+    const contract = tokenType === 'collateral' ? collateralTokenContract! : loanTokenContract!;
+    const address = await signer.getAddress();
+
+    const allowance = await contract.allowance(address, CONTRACT_ADDRESSES.LENDING_PROTOCOL);
+    return ethers.formatEther(allowance);
+};
+
+// Protocol functions
+export const getProtocolInfo = async (): Promise<ProtocolInfo> => {
+    const { loanTokenContract } = getContracts();
+
+    const [collateralTokenAddress, loanTokenAddress, interestRate, collateralRatio, protocolLiquidity] = await Promise.all([
+        lendingProtocolContract!.collateralToken(),
+        lendingProtocolContract!.loanToken(),
+        lendingProtocolContract!.INTEREST_RATE(),
+        lendingProtocolContract!.COLLATERAL_RATIO(),
+        loanTokenContract.balanceOf(CONTRACT_ADDRESSES.LENDING_PROTOCOL)
+    ]);
+
+    return {
+        collateralTokenAddress,
+        loanTokenAddress,
+        interestRate: Number(interestRate),
+        collateralRatio: Number(collateralRatio),
+        protocolLiquidity: ethers.formatEther(protocolLiquidity)
+    };
+};
+
+export const getUserPosition = async (): Promise<UserPosition> => {
+    const { signer } = getContracts();
+    if (!signer) throw new Error('Signer not available');
+    const address = await signer.getAddress();
+
+    const [collateral, debt, interest] = await lendingProtocolContract!.getUserPosition(address);
+
+    return {
+        collateral: ethers.formatEther(collateral),
+        debt: ethers.formatEther(debt),
+        interest: ethers.formatEther(interest)
+    };
+};
+
+// Lending functions
+export const depositCollateral = async (amount: string) => {
+    const amountWei = ethers.parseEther(amount);
+
+    const tx = await lendingProtocolContract!.depositCollateral(amountWei);
+    await tx.wait();
+    return tx;
+};
+
+export const borrow = async (amount: string) => {
+    const amountWei = ethers.parseEther(amount);
+
+    const tx = await lendingProtocolContract!.borrow(amountWei);
+    await tx.wait();
+    return tx;
+};
+
+export const repay = async () => {
+    const tx = await lendingProtocolContract!.repay();
+    await tx.wait();
+    return tx;
+};
+
+export const withdrawCollateral = async () => {
+    const tx = await lendingProtocolContract!.withdrawCollateral();
+    await tx.wait();
+    return tx;
+};
+
+// Utility functions
+export const formatEther = (amount: bigint | string): string => {
+    return ethers.formatEther(amount);
+};
+
+export const parseEther = (amount: string): bigint => {
+    return ethers.parseEther(amount);
+};
+
+export const shortenAddress = (address: string): string => {
+    return `${address.slice(0, 6)}...${address.slice(-4)}`;
+};
+
+// Calculate maximum borrowable amount based on collateral
+export const calculateMaxBorrow = (collateralAmount: string, collateralRatio: number): string => {
+    const collateral = parseFloat(collateralAmount);
+    const maxBorrow = collateral * 100 / collateralRatio;
+    return maxBorrow.toFixed(6);
+};
+
+// Calculate required collateral for a borrow amount
+export const calculateRequiredCollateral = (borrowAmount: string, collateralRatio: number): string => {
+    const borrow = parseFloat(borrowAmount);
+    const requiredCollateral = borrow * collateralRatio / 100;
+    return requiredCollateral.toFixed(6);
+};
+
+// Check if wallet is connected
+export const isWalletConnected = async (): Promise<boolean> => {
+    if (typeof window.ethereum === 'undefined') return false;
+
+    try {
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const accounts = await provider.listAccounts();
+        return accounts.length > 0;
+    } catch (error) {
+        return false;
+    }
+};
+
+// Get connected account
+export const getConnectedAccount = async (): Promise<string | null> => {
+    if (typeof window.ethereum === 'undefined') return null;
+
+    try {
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const accounts = await provider.listAccounts();
+        return accounts.length > 0 ? accounts[0].address : null;
+    } catch (error) {
+        return null;
+    }
 };
 
 // Connect wallet
-export const connectWallet = async () => {
+export const connectWallet = async (): Promise<string> => {
     if (typeof window.ethereum === 'undefined') {
-        throw new Error('Please install MetaMask');
+        throw new Error('MetaMask is not installed');
     }
 
-    try {
-        const accounts = await window.ethereum.request({
-            method: 'eth_requestAccounts'
-        });
-        return accounts[0];
-    } catch (error) {
-        console.error('Error connecting wallet:', error);
-        throw error;
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const accounts = await provider.send("eth_requestAccounts", []);
+
+    if (accounts.length === 0) {
+        throw new Error('No accounts found');
     }
+
+    return accounts[0];
 };
 
-// Mint and list NFT
-export const mintAndListNFT = async (uri: string, price: string) => {
-    const contract = await getContract();
-    const priceInWei = ethers.parseEther(price);
+// Listen for account changes
+export const onAccountsChanged = (callback: (accounts: string[]) => void) => {
+    if (typeof window.ethereum === 'undefined') return;
 
-    try {
-        const tx = await contract.mintAndList(uri, priceInWei);
-        return await tx.wait();
-    } catch (error) {
-        console.error('Error minting NFT:', error);
-        throw error;
-    }
+    window.ethereum.on('accountsChanged', callback);
 };
 
-// Buy NFT
-export const buyNFT = async (tokenId: number, price: string) => {
-    const contract = await getContract();
-    const priceInWei = ethers.parseEther(price);
+// Listen for chain changes
+export const onChainChanged = (callback: (chainId: string) => void) => {
+    if (typeof window.ethereum === 'undefined') return;
 
-    try {
-        const tx = await contract.buy(tokenId, { value: priceInWei });
-        return await tx.wait();
-    } catch (error) {
-        console.error('Error buying NFT:', error);
-        throw error;
-    }
+    window.ethereum.on('chainChanged', callback);
 };
 
-// Get listing details
-export const getListing = async (tokenId: number) => {
-    try {
-        if (!tokenId || tokenId <= 0) {
-            throw new Error('Invalid token ID');
-        }
+// Get network info
+export const getNetworkInfo = async () => {
+    if (typeof window.ethereum === 'undefined') return null;
 
-        const contract = await getContract();
-        if (!contract) {
-            throw new Error('Failed to get contract instance');
-        }
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const network = await provider.getNetwork();
 
-        console.log('Contract address:', contract.target);
-        console.log('Fetching listing for tokenId:', tokenId);
-
-        // Get the listing data
-        const listing = await contract.getListing(tokenId);
-        console.log('Raw listing data:', listing);
-
-        if (!listing || listing.length < 3) {
-            throw new Error('Invalid listing data received');
-        }
-        return {
-            owner: listing[0],
-            price: ethers.formatEther(listing[1]),
-            isSold: listing[2],
-            uri: undefined
-        };
-    } catch (error: any) {
-        console.error('Error in getListing:', error);
-        if (error.code === 'CALL_EXCEPTION') {
-            throw new Error('Contract call failed. Make sure the contract is deployed and the token ID exists.');
-        }
-        throw error;
-    }
+    return {
+        chainId: network.chainId,
+        name: network.name
+    };
 }; 
