@@ -127,6 +127,8 @@ export const initializeContracts = async () => {
     provider = new ethers.BrowserProvider(window.ethereum);
     signer = await provider.getSigner();
 
+    console.log('Initializing contracts with addresses:', CONTRACT_ADDRESSES);
+
     collateralTokenContract = new ethers.Contract(
         CONTRACT_ADDRESSES.COLLATERAL_TOKEN,
         COLLATERAL_TOKEN_ABI,
@@ -144,6 +146,21 @@ export const initializeContracts = async () => {
         LENDING_PROTOCOL_ABI,
         signer
     );
+
+    // Test if contracts are accessible
+    try {
+        const collateralName = await collateralTokenContract.name();
+        const loanName = await loanTokenContract.name();
+        const protocolCollateral = await lendingProtocolContract.collateralToken();
+
+        console.log('Contract initialization successful:');
+        console.log('- Collateral token name:', collateralName);
+        console.log('- Loan token name:', loanName);
+        console.log('- Protocol collateral address:', protocolCollateral);
+    } catch (error) {
+        console.error('Contract initialization test failed:', error);
+        throw new Error('Failed to initialize contracts. Please check if contracts are deployed correctly.');
+    }
 
     return {
         collateralTokenContract,
@@ -193,12 +210,57 @@ export const getTokenInfo = async (tokenType: 'collateral' | 'loan'): Promise<To
 };
 
 export const approveToken = async (tokenType: 'collateral' | 'loan', amount: string) => {
-    const contract = tokenType === 'collateral' ? collateralTokenContract! : loanTokenContract!;
-    const amountWei = ethers.parseEther(amount);
+    console.log('approveToken called with amount:', amount);
+    console.log('Amount type:', typeof amount);
+    console.log('Amount length:', amount.length);
 
-    const tx = await contract.approve(CONTRACT_ADDRESSES.LENDING_PROTOCOL, amountWei);
-    await tx.wait();
-    return tx;
+    const contract = tokenType === 'collateral' ? collateralTokenContract! : loanTokenContract!;
+
+    // Check if amount is a valid number
+    const amountFloat = parseFloat(amount);
+    console.log('Amount as float:', amountFloat);
+
+    if (isNaN(amountFloat) || amountFloat <= 0) {
+        throw new Error('Invalid amount provided');
+    }
+
+    const amountWei = ethers.parseEther(amount);
+    console.log('Amount in Wei:', amountWei.toString());
+    console.log('Expected Wei for 0.00001:', ethers.parseEther('0.00001').toString());
+    const { signer } = getContracts();
+    if (!signer) throw new Error('Signer not available');
+    const userAddress = await signer.getAddress();
+
+    try {
+        // Check user's balance first
+        const balance = await contract.balanceOf(userAddress);
+        console.log('User balance:', ethers.formatEther(balance));
+
+        if (balance < amountWei) {
+            throw new Error(`Insufficient balance. You have ${ethers.formatEther(balance)} tokens but trying to approve ${amount}`);
+        }
+
+        // Check current allowance
+        const currentAllowance = await contract.allowance(userAddress, CONTRACT_ADDRESSES.LENDING_PROTOCOL);
+        console.log('Current allowance:', ethers.formatEther(currentAllowance));
+
+        // Estimate gas first
+        const gasEstimate = await contract.approve.estimateGas(CONTRACT_ADDRESSES.LENDING_PROTOCOL, amountWei);
+        console.log('Gas estimate:', gasEstimate.toString());
+
+        // Add 20% buffer to gas estimate
+        const gasLimit = gasEstimate * 120n / 100n;
+
+        // Try without specifying gas parameters first
+        const tx = await contract.approve(CONTRACT_ADDRESSES.LENDING_PROTOCOL, amountWei);
+
+        console.log('Transaction sent:', tx.hash);
+        await tx.wait();
+        return tx;
+    } catch (error) {
+        console.error('Approve transaction failed:', error);
+        throw error;
+    }
 };
 
 export const getTokenAllowance = async (tokenType: 'collateral' | 'loan'): Promise<string> => {
@@ -250,9 +312,25 @@ export const getUserPosition = async (): Promise<UserPosition> => {
 export const depositCollateral = async (amount: string) => {
     const amountWei = ethers.parseEther(amount);
 
-    const tx = await lendingProtocolContract!.depositCollateral(amountWei);
-    await tx.wait();
-    return tx;
+    try {
+        // Estimate gas first
+        const gasEstimate = await lendingProtocolContract!.depositCollateral.estimateGas(amountWei);
+        console.log('Deposit gas estimate:', gasEstimate.toString());
+
+        // Add 20% buffer to gas estimate
+        const gasLimit = gasEstimate * 120n / 100n;
+
+        const tx = await lendingProtocolContract!.depositCollateral(amountWei, {
+            gasLimit: gasLimit
+        });
+
+        console.log('Deposit transaction sent:', tx.hash);
+        await tx.wait();
+        return tx;
+    } catch (error) {
+        console.error('Deposit transaction failed:', error);
+        throw error;
+    }
 };
 
 export const borrow = async (amount: string) => {

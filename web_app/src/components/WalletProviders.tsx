@@ -90,31 +90,6 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     // Display detected providers as connect buttons.
     return (
         <WalletContext.Provider value={{ account, isConnecting, connect, disconnect }}>
-            <div>
-                <h2>Wallets Detected:</h2>
-                <div>
-                    {
-                        providers.length > 0 ? providers?.map((provider: EIP6963ProviderDetail) => (
-                            <button key={provider.info.uuid} onClick={() => connect()} >
-                                <img src={provider.info.icon} alt={provider.info.name} />
-                                <div>{provider.info.name}</div>
-                            </button>
-                        )) :
-                            <div>
-                                No Announced Wallet Providers
-                            </div>
-                    }
-                </div>
-                <hr />
-                <h2>{account ? "" : "No "}Wallet Selected</h2>
-                {account &&
-                    <div>
-                        <div>
-                            <div>({formatAddress(account)})</div>
-                        </div>
-                    </div>
-                }
-            </div>
             {children}
         </WalletContext.Provider>
     );

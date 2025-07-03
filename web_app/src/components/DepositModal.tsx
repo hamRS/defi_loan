@@ -41,6 +41,9 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose, onS
             return;
         }
 
+        console.log('Approving amount:', amount);
+        console.log('Amount as float:', parseFloat(amount));
+
         setLoading(true);
         setError(null);
 
@@ -79,7 +82,9 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose, onS
 
     const needsApproval = parseFloat(amount) > parseFloat(allowance);
 
-    if (!isOpen) return null;
+    if (!isOpen) {
+        return null;
+    }
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
