@@ -114,7 +114,10 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose, onS
                         <input
                             type="number"
                             value={amount}
-                            onChange={(e) => setAmount(e.target.value)}
+                            onChange={(e) => {
+                                console.log('Input changed to:', e.target.value);
+                                setAmount(e.target.value);
+                            }}
                             placeholder="0.0"
                             step="0.000001"
                             min="0"
